@@ -1,0 +1,60 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TaskMate</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: auto; }
+    li.done { text-decoration: line-through; color: green; }
+  </style>
+</head>
+<body>
+  <h1>📝 TaskMate</h1>
+  <input id="taskInput" placeholder="Add task" />
+  <button onclick="addTask()">Add</button>
+  <ul id="taskList"></ul>
+
+  <script>
+    async function loadTasks() {
+      const res = await fetch('http://localhost:5000/api/tasks');
+      const tasks = await res.json();
+      const ul = document.getElementById('taskList');
+      ul.innerHTML = '';
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.textContent = task.title;
+        li.className = task.completed ? 'done' : '';
+        li.onclick = () => toggleTask(task.id);
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '❌';
+        delBtn.onclick = (e) => { e.stopPropagation(); deleteTask(task.id); };
+        li.appendChild(delBtn);
+        ul.appendChild(li);
+      });
+    }
+
+    async function addTask() {
+      const input = document.getElementById('taskInput');
+      await fetch('http://localhost:5000/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: input.value })
+      });
+      input.value = '';
+      loadTasks();
+    }
+
+    async function toggleTask(id) {
+      await fetch(`http://localhost:5000/api/tasks/${id}`, { method: 'PUT' });
+      loadTasks();
+    }
+
+    async function deleteTask(id) {
+      await fetch(`http://localhost:5000/api/tasks/${id}`, { method: 'DELETE' });
+      loadTasks();
+    }
+
+    loadTasks();
+  </script>
+</body>
+</html>
